@@ -54,10 +54,8 @@ pub const MOORE_NEIGHBORHOOD: [Vec2i; 8] = [
     Vec2i { x: -1, y:  0 },
 ];
 
-pub fn step(world: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
-    let mut world_next: Vec<Vec<bool>> = Vec::new();
+pub fn step(world: Vec<Vec<bool>>, mut world_next: Vec<Vec<bool>>) -> (Vec<Vec<bool>>, Vec<Vec<bool>>) {
     for x in 0..W {
-        world_next.push(Vec::new());
         for y in 0..H {
             let here = world[x][y];
             let sum = get_sum(Vec2i::new(x as i32, y as i32), &world);
@@ -66,17 +64,19 @@ pub fn step(world: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
                 false => next = if sum == 3 {true} else {false},
                 true => next = if sum == 2 || sum == 3 {true} else {false},
             }
-            world_next[x].push(next);
+            // println!("{}x{}", x, y);
+            // println!("{}", world_next[0].len());
+            world_next[x][y] = next;
         }
     }
-    world_next
+    (world_next, world)
 }
 
 pub fn init_world() -> Vec<Vec<bool>> {
     let mut world: Vec<Vec<bool>> = Vec::new();
     for x in 0..W {
         world.push(Vec::new());
-        for y in 0..H {
+        for _y in 0..H {
             world[x].push(if rand_u8(0, 1) == 0 {false} else {true});
         }
     }
