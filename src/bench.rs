@@ -1,4 +1,4 @@
-use macroquad::*;
+use std::time::Instant;
 use random_integer::random_u8 as rand_u8;
 
 fn normalize(p: Vec2i, s: Vec2i) -> Vec2i {
@@ -14,16 +14,6 @@ fn get_sum(vec: Vec2i, world: &Vec<Vec<bool>>) -> u8 {
         sum += world[point.x as usize][point.y as usize] as u8;
     }
     sum
-}
-
-fn draw_cell(x: usize, y: usize, color: Color) {
-    draw_rectangle(
-        (x * PX as usize) as f32,
-        (y * PX as usize) as f32,
-        PX as f32,
-        PX as f32,
-        color,
-    );
 }
 
 #[derive(Hash, Eq, PartialEq, Copy, Clone, Debug)]
@@ -52,7 +42,6 @@ impl std::ops::Add<&Vec2i> for Vec2i {
 
 const W: usize = 500;
 const H: usize = 500;
-const PX: u8 = 1;
 
 const MOORE_NEIGHBORHOOD: [Vec2i; 8] = [
     Vec2i { x: -1, y:  1 },
@@ -65,8 +54,25 @@ const MOORE_NEIGHBORHOOD: [Vec2i; 8] = [
     Vec2i { x: -1, y:  0 },
 ];
 
-#[macroquad::main("Game of Life")]
-async fn main() {
+fn step(world: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
+    let mut world_next: Vec<Vec<bool>> = Vec::new();
+    for x in 0..W {
+        world_next.push(Vec::new());
+        for y in 0..H {
+            let here = world[x][y];
+            let sum = get_sum(Vec2i::new(x as i32, y as i32), &world);
+            let next: bool;
+            match here {
+                false => next = if sum == 3 {true} else {false},
+                true => next = if sum == 2 || sum == 3 {true} else {false},
+            }
+            world_next[x].push(next);
+        }
+    }
+    world_next
+}
+
+fn main() {
     let mut world: Vec<Vec<bool>> = Vec::new();
     for x in 0..W {
         world.push(Vec::new());
@@ -75,25 +81,9 @@ async fn main() {
         }
     }
 
-    loop {
-        clear_background(BLACK);
-        let mut world_next: Vec<Vec<bool>> = Vec::new();
-        for x in 0..W {
-            world_next.push(Vec::new());
-            for y in 0..H {
-                let here = world[x][y];
-                let sum = get_sum(Vec2i::new(x as i32, y as i32), &world);
-                let next: bool;
-                match here {
-                    false => next = if sum == 3 {true} else {false},
-                    true => next = if sum == 2 || sum == 3 {true} else {false},
-                }
-                world_next[x].push(next);
-                if next == true { draw_cell(x, y, WHITE); }
-            }
-        }
-        world = world_next;
-        draw_text(&get_fps().to_string(), 5., 5., 40., RED);
-        next_frame().await;
+    let start = Instant::now();
+    for _ in 0..100 {
+        world = step(world);
     }
+    println!("{:?}", Instant::now() - start);
 }
