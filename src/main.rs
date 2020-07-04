@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-use random_integer::random_i32 as rand_int;
 use macroquad::*;
+use random_integer::random_u8 as rand_u8;
 
 fn normalize(p: Vec2i, s: Vec2i) -> Vec2i {
     let x = if p.x >= 0 {p.x % s.x} else {s.x - ((-p.x) % s.x)};
@@ -8,19 +7,19 @@ fn normalize(p: Vec2i, s: Vec2i) -> Vec2i {
     Vec2i::new(x, y)
 }
 
-fn get_sum(vec: Vec2i, world: &HashMap<Vec2i, i32>) -> i32 {
-    let mut sum = 0;
+fn get_sum(vec: Vec2i, world: &Vec<Vec<bool>>) -> u8 {
+    let mut sum: u8 = 0;
     for i in 0..MOORE_NEIGHBORHOOD.len() {
-        sum += world.get(
-            &normalize(vec + &MOORE_NEIGHBORHOOD[i], Vec2i::new(W, H))).unwrap_or(&0);
+        let point = normalize(vec + &MOORE_NEIGHBORHOOD[i], Vec2i::new(W as i32, H as i32));
+        sum += world[point.x as usize][point.y as usize] as u8;
     }
     sum
 }
 
-fn draw_cell(x: i32, y: i32, color: Color) {
+fn draw_cell(x: usize, y: usize, color: Color) {
     draw_rectangle(
-        (x * PX) as f32,
-        (y * PX) as f32,
+        (x * PX as usize) as f32,
+        (y * PX as usize) as f32,
         PX as f32,
         PX as f32,
         color,
@@ -51,9 +50,9 @@ impl std::ops::Add<&Vec2i> for Vec2i {
 	}
 }
 
-const W: i32 = 250;
-const H: i32 = 250;
-const PX: i32 = 2;
+const W: usize = 800;
+const H: usize = 800;
+const PX: u8 = 1;
 
 const MOORE_NEIGHBORHOOD: [Vec2i; 8] = [
     Vec2i { x: -1, y:  1 },
@@ -68,29 +67,29 @@ const MOORE_NEIGHBORHOOD: [Vec2i; 8] = [
 
 #[macroquad::main("Game of Life")]
 async fn main() {
-
-    let mut world: HashMap<Vec2i, i32> = HashMap::new();
+    let mut world: Vec<Vec<bool>> = Vec::new();
     for x in 0..W {
+        world.push(Vec::new());
         for y in 0..H {
-           world.insert(Vec2i::new(x, y), rand_int(0, 1));
+            world[x].push(if rand_u8(0, 1) == 0 {false} else {true});
         }
     }
 
     loop {
         clear_background(BLACK);
-        let mut world_next: HashMap<Vec2i, i32> = HashMap::new();
+        let mut world_next: Vec<Vec<bool>> = Vec::new();
         for x in 0..W {
+            world_next.push(Vec::new());
             for y in 0..H {
-                let here = world.get(&Vec2i::new(x, y)).unwrap_or(&0);
-                let sum = get_sum(normalize(Vec2i::new(x, y), Vec2i::new(W, H)), &world);
-                let next;
+                let here = world[x][y];
+                let sum = get_sum(Vec2i::new(x as i32, y as i32), &world);
+                let next: bool;
                 match here {
-                    0 => next = if sum == 3 {1} else {0},
-                    1 => next = if sum == 2 || sum == 3 {1} else {0},
-                    _ => {next = 0},
+                    false => next = if sum == 3 {true} else {false},
+                    true => next = if sum == 2 || sum == 3 {true} else {false},
                 }
-                world_next.insert(Vec2i::new(x, y), next);
-                if next == 1 {draw_cell(x, y, WHITE);}
+                world_next[x].push(next);
+                if next == true { draw_cell(x, y, WHITE); }
             }
         }
         world = world_next;
