@@ -16,10 +16,13 @@ fn draw_cell(x: usize, y: usize, color: Color) {
 #[macroquad::main("Game of Life")]
 async fn main() {
     let mut world = init_world();
+    let mut world_next = vec![vec![false; H]; W];
 
     loop {
         clear_background(BLACK);
-        world = step(world);
+        let worlds = step(world, world_next);
+        world_next = worlds.0;
+        world = worlds.1;
         for x in 0..W {
             for y in 0..H {
                 let here = world[x][y];
