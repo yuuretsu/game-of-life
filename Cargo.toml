@@ -1,0 +1,11 @@
+[package]
+name = "game-of-life"
+version = "0.1.0"
+authors = ["HOST"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+random-integer = "1.2.1"
+macroquad = { git = "https://github.com/not-fl3/macroquad", version = "0.2.1" }
